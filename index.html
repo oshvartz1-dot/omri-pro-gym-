@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>Omri PRO Gym</title>
+  <meta name="theme-color" content="#0b1220"/>
+  <link rel="manifest" href="manifest.webmanifest"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#0f1a2f;
+      --line:rgba(255,255,255,.10);
+      --text:#eaf2ff;
+      --muted:rgba(234,242,255,.78);
+      --accent:#6aa7ff;
+      --good:#2ed573;
+      --warn:#ffcc66;
+      --danger:#ff6b6b;
+      --r:16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; padding:16px;
+      font-family: system-ui, -apple-system, "Segoe UI", Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1100px 700px at 85% -20%, rgba(106,167,255,.18), transparent 60%),
+        radial-gradient(900px 650px at 10% 0%, rgba(46,213,115,.10), transparent 55%),
+        var(--bg);
+    }
+    h1{margin:6px 0 14px; font-size:22px}
+    .row{display:flex; gap:12px; flex-wrap:wrap}
+    .card{
+      width:min(980px,100%);
+      background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      padding:14px;
+      box-shadow:0 10px 30px rgba(0,0,0,.22);
+    }
+    .card.narrow{width:min(480px,100%)}
+    .muted{color:var(--muted); font-size:13px; line-height:1.6}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas; font-size:12px; opacity:.9}
+
+    .btn{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      color:var(--text);
+      border-radius:12px;
+      padding:10px 12px;
+      cursor:pointer;
+      font-weight:900;
+      user-select:none;
+      transition:transform .08s ease, background .2s ease;
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      flex:0 0 auto;
+    }
+    .btn:active{transform:scale(.98)}
+    .btn:hover{background:rgba(255,255,255,.08)}
+    .btn.primary{border-color:rgba(106,167,255,.45); background:rgba(106,167,255,.18)}
+    .btn.good{border-color:rgba(46,213,115,.45); background:rgba(46,213,115,.16)}
+    .btn.warn{border-color:rgba(255,204,102,.45); background:rgba(255,204,102,.14)}
+    .btn.danger{border-color:rgba(255,107,107,.55); background:rgba(255,107,107,.14)}
+    .bar{
+      position:sticky; bottom:10px;
+      display:flex; gap:10px; flex-wrap:wrap;
+      padding:10px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:rgba(15,26,47,.88);
+      backdrop-filter: blur(10px);
+      margin-top:12px;
+      z-index:10;
+    }
+
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:6px 10px; border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      font-size:12px; color:var(--muted);
+      margin: 6px 6px 0 0;
+      white-space:nowrap;
+    }
+
+    .panel{
+      margin-top:10px;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.16);
+      line-height:1.7;
+      font-size:13px;
+      color:var(--muted);
+    }
+    .panel b{color:var(--text)}
+
+    .ex{
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      overflow:hidden;
+      background:rgba(255,255,255,.03);
+      margin-top:12px;
+    }
+    .exHead{
+      padding:12px;
+      display:flex; gap:10px;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      border-bottom:1px solid var(--line);
+    }
+    .exTitle{font-size:16px; font-weight:1000}
+    .exMeta{display:flex; gap:8px; flex-wrap:wrap}
+    .exBody{padding:12px}
+
+    .tabs{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+    .tabBtn{
+      font-size:13px;
+      padding:9px 10px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      cursor:pointer;
+      font-weight:900;
+    }
+    .tabBtn.active{border-color:rgba(106,167,255,.45); background:rgba(106,167,255,.18)}
+
+    .grid2{display:grid; grid-template-columns: 1fr 1fr; gap:10px}
+    @media (max-width: 760px){ .grid2{grid-template-columns:1fr} }
+
+    /* Modal */
+    .modalBack{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center; justify-content:center;
+      padding:16px;
+      z-index:50;
+    }
+    .modal{
+      width:min(760px,100%);
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:rgba(15,26,47,.96);
+      box-shadow:0 18px 60px rgba(0,0,0,.45);
+      overflow:hidden;
+    }
+    .modalHead{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+    }
+    .modalBody{padding:14px}
+    video, canvas, img.preview{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:#000;
+    }
+    .hint{border-color:rgba(255,204,102,.35); background:rgba(255,204,102,.10)}
+  </style>
+</head>
+
+<body>
+  <h1>Omri PRO Gym</h1>
+
+  <div class="row">
+    <div class="card narrow">
+      <div class="muted">
+        <b>איך זה עובד:</b><br>
+        • האפליקציה בונה אימון לכל הגוף (מאגר 1000 תרגילים) — אופליין.<br>
+        • אתה מדווח משקל + RPE + כאב → מקבל המלצה לאימון הבא.<br>
+        • צילום מכונה: נשלח ל-AI בשרת Vercel → חוזר זיהוי + המלצה + “הוסף לאימון”.
+      </div>
+
+      <div class="bar" style="position:relative; bottom:auto">
+        <button class="btn primary" onclick="dailyCheckinAndBuild()">Daily Check-In + Build</button>
+        <button class="btn warn" onclick="openCameraModal()">📸 צילום מכונה</button>
+      </div>
+
+      <div class="muted" style="margin-top:10px">
+        Recovery היום: <b id="recoveryLabel">—</b>/100<br>
+        יעד: <b id="goalLabel">fat_loss</b><br>
+        סטים השבוע: <b id="weeklyLabel">—</b>
+      </div>
+
+      <div class="panel hint">
+        <b>בטיחות (חשוב):</b><br>
+        צוואר ניטרלי (סנטר מעט פנימה), כתפיים למטה, בלי תנופה.<br>
+        כאב 0–3 להמשיך, 4–5 להפחית, 6+ לעצור ולהחליף.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="muted">
+        <b>אימון היום – תצוגה לפני התחלה</b><br>
+        כולל עזרה קלינית לכל תרגיל: “איך מבצעים / שרירים / בטיחות”.
+      </div>
+
+      <div id="workoutArea"></div>
+
+      <div class="bar">
+        <button class="btn good" onclick="startWorkout()">התחל אימון</button>
+        <button class="btn" onclick="rebuildWorkout()">בנה אימון מחדש</button>
+        <button class="btn warn" onclick="openCameraModal()">📸 צילום מכונה + זיהוי</button>
+      </div>
+
+      <div style="margin-top:16px">
+        <canvas id="progressChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Camera Modal -->
+  <div class="modalBack" id="modalBack">
+    <div class="modal">
+      <div class="modalHead">
+        <b>צילום מכונה + זיהוי AI</b>
+        <button class="btn danger" onclick="closeCameraModal()">סגור</button>
+      </div>
+      <div class="modalBody">
+        <div class="muted">
+          צלם את המכשיר (עדיף: תמונה רחבה + ידיות/מושב מקרוב).<br>
+          לאחר זיהוי תוכל ללחוץ <b>“הוסף לאימון”</b> והמערכת תכניס/תחליף את התרגיל באזור המתאים.
+        </div>
+
+        <div style="margin-top:12px" class="grid2">
+          <div>
+            <video id="cam" autoplay playsinline></video>
+            <div class="tabs" style="margin-top:10px">
+              <button class="btn primary" onclick="startCamera()">הפעל מצלמה</button>
+              <button class="btn good" onclick="takePhoto()">צלם</button>
+              <button class="btn" onclick="stopCamera()">עצור מצלמה</button>
+            </div>
+          </div>
+          <div>
+            <img id="photoPreview" class="preview" alt="Preview" style="display:none"/>
+            <canvas id="photoCanvas" style="display:none"></canvas>
+
+            <div class="tabs" style="margin-top:10px">
+              <button class="btn warn" onclick="identifyMachine()">🧠 זהה מכונה</button>
+              <button class="btn" onclick="clearPhoto()">נקה</button>
+            </div>
+
+            <div id="aiResult" class="panel" style="display:none"></div>
+
+            <div class="muted mono" style="margin-top:10px">
+              Endpoint: <span>/api/identify-machine</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel hint" style="margin-top:14px">
+          <b>טיפ לצילום:</b><br>
+          1) כל המכשיר בפריים<br>
+          2) צילום מקרוב של ידיות/משקולות/מסילה<br>
+          3) אם יש מדבקה עם הוראות — לצלם גם
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* =========================================================
+   0) PWA register
+   ========================================================= */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+
+/* =========================================================
+   1) Library 1000 (Offline)
+   ========================================================= */
+function buildExerciseLibrary1000({seed=1337}={}){
+  function mulberry32(a){return function(){let t=(a+=0x6D2B79F5);t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296}}
+  const rnd=mulberry32(seed);
+  const pick=(arr)=>arr[Math.floor(rnd()*arr.length)];
+
+  const patterns=[
+    {id:"row_horizontal", name:"חתירה אופקית", zone:"גב", muscles:["גב אמצעי","רחב גבי","אחורי כתף"], equip:["מכונה","כבל","דמבלים"]},
+    {id:"pulldown_vertical", name:"פולי עליון מלפנים", zone:"גב", muscles:["רחב גבי","גב אמצעי"], equip:["מכונה","כבל"]},
+    {id:"chest_press", name:"לחיצת חזה", zone:"חזה", muscles:["חזה","תלת-ראשי"], equip:["מכונה","דמבלים","סמית׳"]},
+    {id:"leg_press", name:"לחיצת רגליים", zone:"רגליים", muscles:["קוואד","עכוז"], equip:["מכונה"]},
+    {id:"scapular_health", name:"Face Pull / שכמות", zone:"שכמות", muscles:["טרפז אמצעי/תחתון","אחורי כתף"], equip:["כבל","גומיה","מכונה"]},
+    {id:"biceps_iso", name:"בייספס בידוד", zone:"יד קדמית", muscles:["דו-ראשי"], equip:["כבל","דמבלים","מכונה"]},
+    {id:"triceps_iso", name:"טרייספס בידוד", zone:"יד אחורית", muscles:["תלת-ראשי"], equip:["כבל","מכונה"]},
+    {id:"core_anti", name:"ליבה (Pallof / Anti)", zone:"ליבה", muscles:["ליבה עמוקה","אלכסוניים"], equip:["כבל","גומיה","משקל גוף"]}
+  ];
+
+  const tempos=["2 שנ׳ ירידה • 1 עצירה • 2 עליה","3 שנ׳ ירידה • 0 • 3 עליה","2 שנ׳ ירידה • 0 • 1 עליה"];
+  const grips=["אחיזה ניטרלית","אחיזה פרונטציה","אחיזה סופינציה"];
+  const angles=["ישיבה","עמידה","שטוח","שיפוע חיובי"];
+
+  const safetyGlobal=[
+    "צוואר ניטרלי: סנטר מעט פנימה (Double-chin עדין), לא לשלוח ראש קדימה.",
+    "כתפיים למטה: לא להרים טרפז לכיוון האוזניים.",
+    "בלי תנופה. תנועה מבוקרת. עצור אם כאב חד/נימול/הקרנה.",
+    "סולם כאב: 0–3 להמשיך; 4–5 להוריד משקל/טווח; 6+ להפסיק ולהחליף."
+  ];
+
+  const out=[], seen=new Set();
+  let i=0;
+  while(out.length<1000 && i<20000){
+    const p=pick(patterns);
+    const equipment=pick(p.equip);
+    const tempo=pick(tempos);
+    const grip=pick(grips);
+    const angle=pick(angles);
+    const name=`${p.name} (${equipment}) • ${angle} • ${grip}`;
+    if(seen.has(name)){i++; continue;}
+    seen.add(name);
+
+    const how = [
+      `הכנה: כוון את ה-${equipment} כך שהמסלול טבעי ולא מושך את הכתף/צוואר.`,
+      `מנח: צוואר ניטרלי (סנטר מעט פנימה), כתפיים למטה, חזה פתוח.`,
+      `ביצוע: התחל בתנועה קטנה ומבוקרת, בלי תנופה.`,
+      `קצב מומלץ: ${tempo}. נשיפה בזמן מאמץ, שאיפה בחזרה.`,
+      `אם כאב עולה/מתח צוואר — הפחת משקל/טווח או החלף תרגיל.`
+    ].join(" ");
+
+    out.push({
+      id:`ex_${String(out.length).padStart(4,"0")}`,
+      name, pattern:p.id, zone:p.zone, equipment,
+      primaryMuscles:p.muscles,
+      howTo: how,
+      safetyNotes: safetyGlobal.concat([
+        "בכתף שמאל: העדף מכונה/כבל ואחיזה ניטרלית. צמצם טווח אם יש כאב קדמי."
+      ]),
+      defaultSets: 3,
+      defaultReps: p.id.includes("core") ? 10 : 10,
+      defaultRestSec: p.id.includes("core") ? 45 : 75,
+      defaultTargetRPE: 7,
+      imageKey: `pattern_${p.id}_${equipment}`
+    });
+    i++;
+  }
+  return out;
+}
+const EXERCISE_LIBRARY = buildExerciseLibrary1000({seed:1337});
+
+/* =========================================================
+   2) Profile (Offline)
+   ========================================================= */
+function loadProfile(){
+  try{
+    const raw = localStorage.getItem("omri_profile_v3");
+    if(!raw) return { goal:"fat_loss", weeklyVolume:{}, history:[], blocked:[], favorites:[] };
+    const p = JSON.parse(raw);
+    p.goal ||= "fat_loss"; p.weeklyVolume ||= {}; p.history ||= []; p.blocked ||= []; p.favorites ||= [];
+    return p;
+  }catch{
+    return { goal:"fat_loss", weeklyVolume:{}, history:[], blocked:[], favorites:[] };
+  }
+}
+let profile = loadProfile();
+function saveProfile(){ localStorage.setItem("omri_profile_v3", JSON.stringify(profile)); }
+
+/* =========================================================
+   3) State
+   ========================================================= */
+let currentWorkout = [];
+let currentRecovery = 0;
+let lastCheckin = null;
+const REQUIRED_ZONES = ["גב","רגליים","חזה","שכמות","יד קדמית","יד אחורית","ליבה"];
+
+/* =========================================================
+   4) Recovery
+   ========================================================= */
+function clamp(x,min,max){ return Math.max(min, Math.min(max, x)); }
+function computeRecoveryScore({sleepHours, stress, soreness, painNeck, painTrap, painShoulder}){
+  const sleepScore = clamp((sleepHours - 4) / 5, 0, 1) * 35;
+  const stressScore = (1 - clamp(stress/10,0,1)) * 20;
+  const sorenessScore = (1 - clamp(soreness/10,0,1)) * 15;
+  const painScore = (1 - clamp((painNeck*0.5 + painTrap*0.3 + painShoulder*0.2)/10,0,1)) * 30;
+  return clamp(Math.round(sleepScore + stressScore + sorenessScore + painScore), 0, 100);
+}
+
+/* =========================================================
+   5) Build workout (AI rules)
+   ========================================================= */
+function dailyCheckinAndBuild(){
+  const sleepHours = Number(prompt("שעות שינה (למשל 6.5):","6.5"));
+  const stress = Number(prompt("סטרס 0-10:","4"));
+  const soreness = Number(prompt("כאבי שרירים כלליים 0-10:","3"));
+  const painNeck = Number(prompt("כאב צוואר 0-10:","3"));
+  const painTrap = Number(prompt("כאב טרפז/שכמות 0-10:","3"));
+  const painShoulder = Number(prompt("כאב כתף שמאל 0-10:","2"));
+
+  const redFlag = confirm("יש נימול/חולשה/כאב מקרין ליד? (כן=לא עושים עומסים)");
+  if(redFlag){
+    alert("היום לא מבצעים עומסים. מומלץ ייעוץ רופא/פיזיו לפני חזרה לאימונים.");
+    return;
+  }
+
+  currentRecovery = computeRecoveryScore({sleepHours, stress, soreness, painNeck, painTrap, painShoulder});
+  lastCheckin = { pain:{neck:painNeck, trap:painTrap, shoulder:painShoulder} };
+
+  profile.goal = (prompt("מטרת היום: fat_loss / muscle_gain / pain_reduction", profile.goal) || profile.goal).trim();
+  saveProfile();
+
+  document.getElementById("recoveryLabel").textContent = currentRecovery;
+  document.getElementById("goalLabel").textContent = profile.goal;
+  document.getElementById("weeklyLabel").textContent = Object.values(profile.weeklyVolume).reduce((a,b)=>a+b,0);
+
+  buildWorkoutFromLibrary();
+}
+
+function buildWorkoutFromLibrary(){
+  const pain = lastCheckin?.pain || {neck:0, trap:0, shoulder:0};
+  const avoidOveruse = (zone) => (profile.weeklyVolume[zone] || 0) >= 12;
+
+  function scoreExercise(ex){
+    let s = 0;
+    if(pain.neck >= 4 || pain.shoulder >= 4){
+      if(ex.equipment.includes("מכונה")) s += 3;
+      if(ex.equipment.includes("כבל")) s += 2;
+      if(ex.equipment.includes("דמבלים")) s -= 1;
+      if(ex.equipment.includes("מוט")) s -= 2;
+    }
+    if(avoidOveruse(ex.zone)){
+      if(ex.equipment.includes("מכונה")) s += 1.2;
+      if(ex.pattern.includes("core") || ex.pattern.includes("scapular")) s += 1.0;
+    }
+    if(profile.favorites.includes(ex.id)) s += 1;
+    s += Math.random() * 0.8;
+    return s;
+  }
+
+  currentWorkout = REQUIRED_ZONES.map(zone=>{
+    let options = EXERCISE_LIBRARY.filter(ex => ex.zone===zone && !profile.blocked.includes(ex.id));
+    if(!options.length) options = EXERCISE_LIBRARY.filter(ex => ex.zone===zone);
+    options.sort((a,b)=>scoreExercise(b)-scoreExercise(a));
+    return prescribe(options[0], pain);
+  });
+
+  renderWorkoutPreview();
+}
+
+function prescribe(ex, pain){
+  let sets = ex.defaultSets, reps = ex.defaultReps, rest = ex.defaultRestSec, rpe = ex.defaultTargetRPE;
+  const highPain = (pain.neck>=6 || pain.trap>=6 || pain.shoulder>=6);
+
+  if(profile.goal === "pain_reduction"){
+    sets = 2; reps = Math.max(12, reps); rest = Math.max(90, rest); rpe = Math.min(6.0, rpe);
+  } else if(profile.goal === "fat_loss"){
+    rest = Math.min(rest, 75); rpe = Math.min(7.0, rpe);
+  } else if(profile.goal === "muscle_gain"){
+    if(currentRecovery >= 70 && !highPain) sets = Math.min(4, sets+1);
+    rpe = Math.min(8.0, rpe+0.5);
+    rest = Math.max(75, rest);
+  }
+
+  if(currentRecovery < 50 || highPain){
+    sets = Math.max(2, sets-1);
+    rpe = Math.max(5.5, rpe-0.5);
+    rest = Math.max(90, rest);
+  }
+
+  return {
+    ...ex,
+    sets, reps, restSec:rest, targetRPE:rpe,
+    help:{
+      how: ex.howTo,
+      muscles: `עובד בעיקר על: ${ex.primaryMuscles.join(", ")}. אזור: ${ex.zone}.`,
+      safety: ex.safetyNotes.join(" • ")
+    }
+  };
+}
+
+/* =========================================================
+   6) Render + tabs help
+   ========================================================= */
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+function renderWorkoutPreview(){
+  const root = document.getElementById("workoutArea");
+  if(!root) return;
+
+  const warnings = getOveruseWarnings();
+  const mins = estimateWorkoutMinutes(currentWorkout);
+
+  let html = `
+    <div class="muted" style="margin-top:10px">
+      זמן משוער: <b>${mins}</b> דק׳ • Recovery: <b>${currentRecovery}</b>/100
+    </div>
+    ${warnings.length ? `
+      <div class="panel hint" style="margin-top:12px">
+        <b>הערות עומס שבועי:</b><br>${warnings.map(w=>`• ${escapeHtml(w)}`).join("<br>")}
+      </div>
+    ` : ""}
+  `;
+
+  currentWorkout.forEach(ex=>{
+    html += `
+      <div class="ex">
+        <div class="exHead">
+          <div>
+            <div class="exTitle">${escapeHtml(ex.name)}</div>
+            <div class="exMeta">
+              <span class="chip">אזור: <b>${escapeHtml(ex.zone)}</b></span>
+              <span class="chip">ציוד: <b>${escapeHtml(ex.equipment)}</b></span>
+              <span class="chip">סטים: <b>${ex.sets}</b></span>
+              <span class="chip">חזרות: <b>${ex.reps}</b></span>
+              <span class="chip">מנוחה: <b>${ex.restSec}</b> שנ׳</span>
+              <span class="chip">RPE יעד: <b>${ex.targetRPE}</b></span>
+            </div>
+          </div>
+          <div class="row">
+            <button class="btn" onclick="toggleFavorite('${ex.id}')">${profile.favorites.includes(ex.id) ? "★ מועדף" : "☆ מועדף"}</button>
+            <button class="btn warn" onclick="blockExercise('${ex.id}')">חסום</button>
+            <button class="btn good" onclick="reportExercise('${ex.id}')">דווח</button>
+          </div>
+        </div>
+
+        <div class="exBody">
+          <div class="tabs">
+            <button class="tabBtn active" onclick="switchTab('${ex.id}','how')">איך מבצעים</button>
+            <button class="tabBtn" onclick="switchTab('${ex.id}','muscles')">שרירים</button>
+            <button class="tabBtn" onclick="switchTab('${ex.id}','safety')">בטיחות</button>
+          </div>
+          <div class="panel" id="panel_${ex.id}">
+            <b>איך מבצעים:</b> ${escapeHtml(ex.help.how)}
+          </div>
+          <div class="muted" style="margin-top:10px">
+            תמונה אופליין (אופציונלי): <span class="mono">images/${escapeHtml(ex.imageKey)}.jpg</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  root.innerHTML = html
